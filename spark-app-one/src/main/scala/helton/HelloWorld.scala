@@ -9,7 +9,7 @@ object HelloWorld {
     // initialise spark context
     val spark = SparkSession
       .builder()
-      .appName("IDR Extract Validation")
+      .appName("Hello")
       .getOrCreate()
     import spark.implicits._
 
@@ -19,7 +19,7 @@ object HelloWorld {
       (-27, "horse")
     ).toDF("number", "word")
     someDF.show
-    someDF.write.option("multiline", true).json("/Users/jarrett.helton/Downloads/spark-hello-world-master/test")
+    someDF.write.option("multiline", true).json("./test/")
 
   }
 }

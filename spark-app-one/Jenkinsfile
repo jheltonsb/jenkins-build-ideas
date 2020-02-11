@@ -1,7 +1,7 @@
 pipeline {
 
     agent any
-    // Should only have to declare the when at the beginning of the pipeline
+    // Only have to declare the when at the beginning of the pipeline
     when {
         changeset "**/spark-app-one/**"
     }
