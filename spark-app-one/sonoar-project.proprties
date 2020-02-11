@@ -1,0 +1,4 @@
+sonar.projectKey=my-test:spark-app-one
+sonar.projectName=Spark App One
+sonar.sources=./src/main/scala
+sonar.organization=theCoolBeans

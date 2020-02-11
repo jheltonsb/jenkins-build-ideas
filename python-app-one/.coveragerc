@@ -1,0 +1,8 @@
+[run]
+omit = tests/*, */__init__.py
+
+[report]
+ignore_errors = True
+
+[xml]
+output = coverage_report.xml

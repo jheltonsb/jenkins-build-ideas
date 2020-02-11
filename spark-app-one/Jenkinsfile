@@ -1,0 +1,90 @@
+pipeline {
+
+    agent any
+    // Should only have to declare the when at the beginning of the pipeline
+    when {
+        changeset "**/spark-app-one/**"
+    }
+
+    environment {
+        SBT_OPTS = "-Xms512M -Xmx4196M -Xss2M -XX:MaxMetaspaceSize=4196M"
+        SBT = "/usr/bin/sbt -no-colors -batch"
+        SONAR_PROJECT_KEY = 'gov.cms.qpp:qpp-eco-extractor'
+        SONAR_PROPERTIES_FILE = './sonar-project-eco-extractor.properties'
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                echo 'Checking out code from SCM...'
+                checkout scm
+            }
+        }
+
+        stage('Move to directory spark-app-one') {
+            steps {
+                sh "cd spark-app-one"
+            }
+        }
+
+        stage('Run Unit Tests for Spark App One') {
+
+            steps {
+                echo 'Running unit tests'
+                sh "${env.SBT} ';coverage ;test'"
+                sh "${env.SBT} coverageReport"
+            }
+        }
+
+        stage('Perform Code Analysis for Spark App One') {
+            steps {
+                sh "${env.SBT} scalafmtCheckAll"
+            }
+        }
+
+         stage('Run Sonar Scan for Spark App One') {
+              steps {
+                   sh "I dont know anything about sonar scans :grimacing:"
+                 }
+              }
+            }
+
+        stage('Deploy Spark App One Master Build Artifact') {
+
+            when {
+                allOf {
+                    branch 'master'
+                }
+            }
+            steps {
+                echo 'Building project...'
+                sh "${env.SBT} assembly"
+
+                // deploy built artifacts
+                }
+            }
+        }
+
+    }
+
+    post {
+
+        failure{
+
+            script {
+
+                if (env.BRANCH_NAME == 'master') {
+                    slackSend (
+                            color: '#FF0000',
+                            message: "Its all broken. You broke it."
+                    )
+                }
+
+            }
+
+        }
+
+    }
+
+}

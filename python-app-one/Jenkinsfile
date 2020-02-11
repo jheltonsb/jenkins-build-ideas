@@ -1,0 +1,98 @@
+pipeline {
+
+    agent any
+    // wondering if we should use a docker agent for docker builds, not sure how the image gets deployed then
+    // Should only have to declare the when at the beginning of the pipeline
+    when {
+        changeset "**/python-app-one/**"
+    }
+
+    environment {
+        SBT_OPTS = "-Xms512M -Xmx4196M -Xss2M -XX:MaxMetaspaceSize=4196M"
+        SBT = "/usr/bin/sbt -no-colors -batch"
+        SONAR_PROJECT_KEY = 'gov.cms.qpp:qpp-eco-extractor'
+        SONAR_PROPERTIES_FILE = './sonar-project-eco-extractor.properties'
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                echo 'Checking out code from SCM...'
+                checkout scm
+            }
+        }
+
+        stage('Move to directory python-app-one') {
+            steps {
+                sh "cd python-app-one"
+            }
+        }
+
+        stage('Install Pipenv Packages') {
+
+            steps {
+                echo 'Installing Pipenv Packages.'
+                sh "pipenv install"
+            }
+        }
+
+        stage('Run Unit Tests for Python App One') {
+
+            steps {
+                echo 'Running unit tests'
+                sh "ENV=TEST pipenv run pytest --cov=my_python_app --cov=runners --cov-config=.coveragerc --cov-fail-under=90 --cov-report=xml tests"
+            }
+        }
+
+        stage('Perform Code Analysis for Python App One') {
+            steps {
+                sh """
+                    pipenv run black claims_to_quality tests
+                    pipenv run flake8 --output-file=pylint-report.txt --tee bin claims_to_quality runners tests
+                """
+            }
+        }
+
+         stage('Run Sonar Scan for Python App One') {
+              steps {
+                   sh "I dont know anything about sonar scans :grimacing:"
+                 }
+              }
+            }
+
+        stage('Deploy Spark App One Master Build Docker Image to ECR') {
+
+            when {
+                allOf {
+                    branch 'master'
+                }
+            }
+            steps {
+                echo 'Doing things to build the docker image and sent to ECR...'
+                }
+            }
+        }
+
+    }
+
+    post {
+
+        failure{
+
+            script {
+
+                if (env.BRANCH_NAME == 'master') {
+                    slackSend (
+                            color: '#FF0000',
+                            message: "Its all broken. You broke it."
+                    )
+                }
+
+            }
+
+        }
+
+    }
+
+}
